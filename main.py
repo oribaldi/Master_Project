@@ -5,11 +5,6 @@
 # 
 # Author: Oriana Baldizan
 # Date:   October 2015
-# 4929936 wikipedia articles
-# 4929500
-# Final documents 4201775 (removed small articles)
-# Now final: 2080904
-# Number of words: 100000
 #############################################################
 
 # Python Modules
@@ -31,13 +26,10 @@ from lda import LDA
 
 if len(sys.argv) > 1:
 	theme = sys.argv[1]
-"""
 else:
 	print('No theme provided')
 	sys.exit(0)
-"""
-
-theme = "travel"
+#theme = "beer"
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
@@ -99,6 +91,11 @@ if __name__ == '__main__':
     esa = ESA(setting)
     #lda = LDA(setting)
 
+    ################################
+    # Do not do everything at the 
+    # same time, it takes too long.
+    ################################
+
     # Preprocess and Load wiki data
     #esa.clean_and_load_data()
 
@@ -112,24 +109,19 @@ if __name__ == '__main__':
     #p.sort_stats('time').print_stats(10)
 
     #esa.prun_inverted_index()
-
     #esa.load_esa_index()
 
-    # Load Stack data and create TF-IDF vectors
-    # Calculate similarities
+    # Experiment 1 - global scenario
     #esa.calculate_similarities()
     #esa.calculate_tf_idf_similarities()
+
+    # Experiment 2 - local scenario
     #filtered_users = esa.calculate_local_esa_similarities()
     #filtered_users = esa.calculate_local_tfidf_similarities()
-    
-
     #esa.stack_importer.filtered_users = filtered_users
 
-    #print esa.stack_importer.filtered_users
-
-    #esa.save_index_to_file('../data/ESA/index.txt')
-    #esa.save_relatedness_to_file("../data/ESA/relatedness.txt")
-
+    # Experiment 3 - calculate similarities between a question and users'
+    # knowledge space in order to identify experts
     esa.calculate_tfidf_similarities_to_users()
     #esa.calculate_esa_similarities_to_users()
 
@@ -138,12 +130,9 @@ if __name__ == '__main__':
     # Experiments - Calculate statistics on the data
     ###############################################################################
     #esa.initialize_experiments()
+    #esa.run_experiment_1_avg(algorithm="tfidf")
     #esa.run_experiment_2_avg(algorithm="tfidf")
     esa.run_experiment_3_avg(algorithm="tfidf")
-
-    #esa.stack_importer.open_stack_db()
-    #esa.stack_importer.user_avg_answers()
-    #esa.stack_importer.close_stack_db()
 
 
     ###############################################################################
@@ -153,31 +142,4 @@ if __name__ == '__main__':
     #filtered_users = lda.calculate_local_similarities()
     #lda.stack_importer.filtered_users = filtered_users
     #lda.run_experiment_2_avg()
-
-    # Read dictionary
-    """
-    connection = sqlite3.connect('../data/ESA/esa.db')
-    cursor = connection.cursor()
-    query  = 'SELECT term, term_id FROM term_map'
-    cursor.execute(query)
-
-    dictionary = []
-    for term, term_id in cursor:
-        dictionary.append( (term_id, term) )
-
-    with open("dictionary.txt", 'a') as f:
-        for term_id, term in dictionary:
-            f.write(str(term_id) + " " + term + '\n')
-    
-    connection = sqlite3.connect('../data/Wiki/enwiki.db')
-    cursor = connection.cursor()
-    query  = 'SELECT content FROM wiki_articles WHERE id = 1'
-    cursor.execute(query)
-
-    with open("content1.txt", 'a') as f:
-        for content in cursor:
-            f.write(str(content))
-    """
-
-    #esa.testing_beer_concept()
     

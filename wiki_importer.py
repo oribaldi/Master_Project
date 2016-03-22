@@ -68,7 +68,6 @@ class WikiImporter (object):
 
 	def import_wiki_data(self):
 
-		#self._create_wiki_db()
 		self._import_wiki_articles()
 
 
@@ -186,7 +185,6 @@ class WikiImporter (object):
 		cursor = connection.cursor()
 
 		values = []
-
 		for doc in documents:
 			values.append( (doc.document_id, doc.title, doc.url, doc.content) )
 			
@@ -199,7 +197,6 @@ class WikiImporter (object):
 		""" Remove documents with less than 100 words """
 
 		result = []
-
 		for doc in documents:
 			if len(doc.content) >= 100:
 				result.append(doc)
@@ -271,79 +268,4 @@ class WikiImporter (object):
 		cursor.executemany(query, values)
 
 		connection.commit()
-		connection.close()
-
-
-
-	### IGNORE ###
-
-	def get_corpus(self, corpus):
-		""" Returns the Wikipedia corpus """
-
-		logging.info("Retrieving corpus ...")
-
-		# Open database connection
-		connection = sqlite3.connect(self.setting['wiki_dbpath'])
-		cursor     = connection.cursor()
-
-		# Retrieve articles content
-		logging.info("\nRetrieving wikipedia corpus ...")
-		query = 'SELECT id, content FROM wiki_articles ORDER BY id'
-		cursor.execute(query)
-
-		"""p_pool = Pool(processes=5)
-		corpus = p_pool.imap(create_corpus, cursor.fetchall())
-		p_pool.close()
-		p_pool.join()
-		#with open(self.setting['wiki_corpus'], 'a') as f:
-		"""
-		for document_id, content in cursor:
-			corpus.append(content.split(' '))
-			#f.write(str(document_id) + " " + content + '\n')
-
-		connection.close()
-
-	def get_wiki_tf_idf(self):
-		""" Gets the Wikipedia tf-idf vectors from the database """
-
-		corpus     = []
-		vocabulary = None
-
-		# Open database connection
-		connection = sqlite3.connect(self.setting['wiki_dbpath'])
-		cursor     = connection.cursor()
-
-		# Retrieve articles content
-		logging.info("\nRetrieving wikipedia corpus ...")
-		query = 'SELECT id, content FROM wiki_articles'
-		cursor.execute(query)
-
-		for (id, document) in cursor:
-			tokens = document.split(' ')
-			corpus.append(tokens)
-
-		# Close database connection
-		connection.close()
-
-		logging.info("\nRetrieving vocabulary ...")
-		vocabulary = corpora.Dictionary(corpus)
-
-		logging.info("Removing very common and very uncommon words...")
-		no_below = self.setting['filter_less_than_no_of_documents']
-		no_above = self.setting['filter_more_than_fraction_of_documents']
-		self.vocabulary.filter_extremes(no_below=no_below, no_above=no_above)
-
-		return vocabulary
-
-
-	def get_stack_tf_idf(self):
-		""" Gets the Stackoverflow tf-idf vectors from the database """
-
-		# Open database connection
-		connection = sqlite3.connect(self.setting['stack_dbpath'])
-		cursor     = connection.cursor()
-
-		# Retrieve vectors
-
-		# Close database connection
 		connection.close()

@@ -75,7 +75,6 @@ class StackNetwork(object):
 		print "Number of strongly connected components = {}".format(num_components)
 
 		biggest_component   = graph_components.giant()
-		"""
 		component_num_nodes = len(biggest_component.vs)
 		component_num_edges = len(biggest_component.es)
 		print "Nodes of the biggest strongly connected component = {}".format(component_num_nodes)
@@ -92,9 +91,9 @@ class StackNetwork(object):
 		nodes, bins   = histogram(nodes_betweenness, bins=15) #Counter(nodes_betweenness)
 
 		print '\nBetweenness centrality distribution '
-		print nodes
-		print '\n'
-		print bins
+		#print nodes
+		#print '\n'
+		#print bins
 
 		plt.bar(bins[:-1], nodes, width = 5)
 		plt.xlim(min(bins), max(bins))
@@ -103,7 +102,6 @@ class StackNetwork(object):
 		plt.ylabel('Number of nodes')
 		#plt.title('')
 		plt.show() 
-		"""
 
 		print '\nDegree centrality '
 		neighborhood_size = biggest_component.neighborhood_size()
@@ -125,9 +123,21 @@ class StackNetwork(object):
 		print 'Max number of friends ' + str(max(neighborhood_size))
 
 
+	def save_graph():
+		""" Saves the graph in a file for later visualization """
+
+		graph_components  = self.stack_graph.components(mode=STRONG) # or graph.clusters(mode=STRONG)
+		biggest_component = graph_components.giant()
+		nodes_betweenness = map(round, biggest_component.betweenness())
+		biggest_component.vs["betweenness"] = nodes_betweenness
+		biggest_component.save(theme + '_graph.txt', format='gml')
+
+
+
+
 if __name__ == '__main__':
 
-	theme = "history"
+	theme = "beer"
 
 	setting = {
 	'theme': theme,
@@ -152,11 +162,3 @@ if __name__ == '__main__':
 
 	# Calculates different statistics
 	#stack_network.calculate_statistics()
-
-	#layout = stack_network.stack_graph.layout("kk")
-
-	graph_components  = stack_network.stack_graph.components(mode=STRONG) # or graph.clusters(mode=STRONG)
-	biggest_component = graph_components.giant()
-	nodes_betweenness = map(round, biggest_component.betweenness())
-	biggest_component.vs["betweenness"] = nodes_betweenness
-	biggest_component.save(theme + '_graph.txt', format='gml')

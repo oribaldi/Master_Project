@@ -238,11 +238,6 @@ class StackImporter (object):
 		logging.info("Building the dictionary...")
 		dictionary = corpora.Dictionary(combined_corpora)
 
-		#logging.info("Removing very common and very uncommon words...")
-		#no_below = self.setting['filter_less_than_no_of_documents']
-		#no_above = self.setting['filter_more_than_fraction_of_documents']
-		#dictionary.filter_extremes(no_below=no_below, no_above=no_above)
-
 		return dictionary
 
 
@@ -431,10 +426,8 @@ class StackImporter (object):
 		corpus = []
 		append = corpus.append
 
-		#logging.info("Loading local questions ...")
 		user_questions   = self.get_user_asked_questions(user_id)
 		user_a_questions = self.get_user_answered_questions(user_id)
-
 		total_questions  = self._remove_duplicates(user_questions + user_a_questions)
 		for question in total_questions:
 			append(question.body)

@@ -217,7 +217,6 @@ class ESAImporter (object):
 
 			new_content = [x for x in content if x in dictionary]
 			print "Doc " + str(document.document_id)
-			#print "Old " + str(len(content)) + " NEW " + str(len(new_content))
 			append( (document.document_id, ' '.join(new_content) ) )
 
 		query = 'INSERT INTO wiki_articles VALUES (?, ?)'
@@ -232,7 +231,6 @@ class ESAImporter (object):
 	def save_term_doc_frequencies(self):
 		""" For each wiki article, calculates the frequency of each word in it """
 
-		#wiki_connection = sqlite3.connect(self.setting['wiki_dbpath'])
 		corpus          = WikiCorpus(self.connection)
 
 		# Clean table
@@ -251,7 +249,6 @@ class ESAImporter (object):
 		# Keep dictionary
 		dictionary = {}
 		for word, word_id in cursor:
-			#dictionary.append( (word, word_id) )
 			dictionary[unicode(word)] = word_id
 
 		for document in corpus:
@@ -269,48 +266,7 @@ class ESAImporter (object):
 			query = 'INSERT INTO doc_term_freq VALUES (?,?,?)'
 			cursor2.executemany(query, frequencies)
 
-			"""
-			for word, word_id in dictionary:
-				word_count = doc_freq.get(word, 0)
-				if word_count > 0 :
-					frequencies.append( (word_id, document.document_id, word_count) )
-			"""
-
-		"""
-
-		for document in corpus:
-			content = document.content.split(' ')
-
-			number_words = 0
-
-			for word, word_id in dictionary:
-				word_count = content.count(word)
-				#print word + " " + str(word_count)
-
-				if word_count > 0:
-					number_words += 1
-					query   = 'INSERT INTO doc_term_freq VALUES (?,?,?)'
-					values  = (word_id, document.document_id, word_count)
-					cursor2.execute(query, values)
-
-			print "For doc " + str(document.document_id) + " added " + str(number_words)
-
-			####
-			
-			all_freq = self._compute_term_frequencies(content)
-
-			for term_id, frequency in all_freq:
-				tf = 1.0 + math.log(freq)
-
-				query  = 'INSERT INTO doc_term_freq VALUES (?,?,?)'
-				values = (term_id, document.id, tf)
-				cursor.execute(query, values)
-		"""
 		self.connection.commit()
-
-		#query = 'CREATE INDEX term_doc_freq ON doc_term_freq (term_id, freq)'
-		#cursor.execute(query)
-
 		logging.info("\nDone")
 
 
@@ -323,9 +279,6 @@ class ESAImporter (object):
 
 	def save_wiki_vectors(self, vectors):
 		""" Saves the wiki dictionary and vectors into the database """
-
-		#logging.info("\nSaving dictionary into ESA database ...")
-		#self._save_dictionary(dictionary)
 
 		logging.info("\nSaving inverted_index into ESA database ...")
 		self._save_inverted_index(vectors)
@@ -417,9 +370,6 @@ class ESAImporter (object):
 		cursor.executemany(query, values)
 		self.connection.commit()
 
-		#print inverted_index
-		#print len(inverted_index)
-
 
 	def get_inverted_index(self, inverted_index):
 		""" Returns the inverted index from the ESA database """
@@ -437,7 +387,6 @@ class ESAImporter (object):
 				document_id, value   = struct.unpack('if', term_vector[i:i+8])
 				inverted_index[term].append( (document_id, value) )
 
-			#print term
 
 
 	def get_pruned_inverted_index(self, inverted_index):
@@ -476,7 +425,6 @@ class ESAImporter (object):
 		""" Returns the frequency values for each term in the Wikipedia corpus """
 
 		result = {}
-
 		cursor = self.connection.cursor()
 		query  = 'SELECT term_id, doc_id, freq FROM doc_term_freq ORDER BY term_id, freq'
 
@@ -493,7 +441,6 @@ class ESAImporter (object):
 		append     = values.append
 		term_count = {}
 
-		#print "Retrieving"
 		# Get corpus from database
 		corpus = WikiCorpus(self.connection, self.testing)
 
@@ -538,26 +485,6 @@ class ESAImporter (object):
 		for term, value in cursor:
 			inv_doc_freq[term] = value
 
-		
-
-		#print "Loaded"
-
-		"""
-
-		print "Retrieving"
-		cursor = self.connection.cursor()
-		query  = 'SELECT term_id, count(doc_id) FROM doc_term_freq GROUP BY term_id'
-		cursor.execute(query)
-
-		for term_id, term_count in cursor:
-			idf = math.log(float(number_of_documents) / term_count)
-			result[term_id] = idf
-
-		print "Loaded"
-		"""
-
-		#return result
-
 
 	###############################################################################
 	# Additional methods applied to TF-IDF Vectors
@@ -593,14 +520,7 @@ class ESAImporter (object):
 		result    = []
 		append    = result.append
 
-		#if word == 33796:
-			#print "Max score " + str(max_score) + " - " + str(sorted_list[0][0])
-
 		for i, (document_id, value) in enumerate(sorted_list):
-
-			#if max_score == float('nan'):
-				#max_score = sorted_list[i][1]
-
 			if len(result) >= window_size:
 				# First and last elements of the window
 				window_first = sorted_list[ max(0, i - window_size) ]
@@ -614,12 +534,6 @@ class ESAImporter (object):
 					break
 
 			append( (document_id, value) )
-
-		#if word == 33796:
-			#print "Max score " + str(max_score) + " - " + str(sorted_list[0][0])
-
-		#if len(sorted_list) > len(result):
-		#	print "Pruned something"
 
 		return result
 
@@ -692,8 +606,6 @@ class ESAImporter (object):
 		for concept_id in concepts:
 			values.append( (concept_id, document_id, interpretation[concept_id], type) )
 
-		#print values
-
 		cursor.executemany(query, values)
 		self.connection.commit()
 
@@ -723,7 +635,6 @@ class ESAImporter (object):
 			if concept_name is None:
 				concept_name = "NOT FOUND"
 
-			
 			stack_query = 'SELECT title, body FROM question WHERE id = ?'
 			stack_cursor.execute(stack_query, (question_id,))
 			question_title, question_body = stack_cursor.fetchone()

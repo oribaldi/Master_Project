@@ -26,8 +26,6 @@ from gensim import corpora, utils
 import logging
 import unicodedata
 
-# Project Modules
-
 
 # Global Variables
 stop_words = stopwords.words("english")
@@ -86,8 +84,6 @@ class WikiDocument (object):
 				self.content += " " + element
 
 
-
-
 class WikiPreprocessor (object):
 	""" Preprocessor for Wikipedia data """
 
@@ -120,15 +116,9 @@ class WikiPreprocessor (object):
 		clean_document = document
 		clean_document.content = self.remove_special_characters(clean_document.content)
 
-		# Convert document into tokens
+		# Convert document into tokens and clean it
 		tokens = utils.simple_preprocess(clean_document.content)
-
-		#logging.info("\nRemoving stop words ...")
 		clean_content = self.remove_stop_words(tokens)
-
-		# Add clean document to corpus
-		#self.corpus.append(clean_document)
-
 		clean_document.content = ' '.join(clean_content)
 
 		return clean_document
@@ -138,7 +128,6 @@ class WikiPreprocessor (object):
 		""" Replaces the accents and special characters in text """
 
 		nkfd_form = unicodedata.normalize('NFKD', unicode(text)).encode('ASCII', 'ignore')
-		#unic_form = u"".join([c for c in nkfd_form if not unicodedata.combining(c)])
 		return nkfd_form
 
 

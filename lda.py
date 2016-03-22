@@ -10,6 +10,7 @@
 # lda.py: Defines the topic model algorithm LDA
 #
 # - Only implementing LDA with local data
+# - Based on: https://github.com/Cordt/LDA-SO
 #
 ###########################################################################
 
@@ -21,7 +22,6 @@ import os
 import sys
 import tempfile
 
-#tempfile.tempdir = 'C:\\Users\\Oriana\\Documents\\Univ\\TUM\\Thesis\\Experiments\\tmp\\'
 tempfile.tempdir  = '../tmp/'
 
 # Project Modules
@@ -61,7 +61,6 @@ class LDA (object):
 
 		for document in self.corpus:
 			yield self.dictionary.doc2bow(document)
-
 
 
 	def calculate_similarities(self):
@@ -143,25 +142,18 @@ class LDA (object):
 		question_corpus  = StackCorpus(self.stack_importer.connection, "question")
 		similar_answers  = {}
 		original_answers = {}
-		#i = 0
+		
 		for question in question_corpus:
-
-			#if i == 5:
-			#	break
-			#i += 1
 			original_answers[question.id] = self.stack_importer.get_question_original_answers(question.id)
 			similar_answers[question.id]  = self.esa_importer.load_similarities_for_question(question.id, -1, False)
 
 		self.stack_importer.close_stack_db()
 		self.lda_importer.close_lda_db()
 
-
 		# Calculate avg precision and recall for each case
 		precision = {}
 		recall    = {}
-		#total_answers = 20
 		for limit in xrange(1,total_answers+1):
-			#print "Calculating with limit " + str(limit)
 			logging.info("Calculating with limit %s", str(limit))
 
 			avg_precision, avg_recall = self.experiments.run_experiment_1_avg(number_of_answers,
@@ -242,8 +234,6 @@ class LDA (object):
 			# Save similarities to databse
 			logging.info("\nSaving similarities to database ...")
 			self.lda_importer.save_similarities(similarities)
-			#similarities.clear()
-
 
 		# Close database connections
 		self.stack_importer.close_stack_db()
@@ -300,13 +290,8 @@ class LDA (object):
 		question_corpus  = StackCorpus(self.stack_importer.connection, "question")
 		similar_answers  = {}
 		original_answers = {}
-		#i = 0
+		
 		for question in question_corpus:
-
-			#if i == 5:
-			#	break
-			#i += 1
-
 			original_answers[question.id] = self.stack_importer.get_question_original_answers(question.id)
 			similar_answers[question.id]  = self.lda_importer.load_similarities_for_question(question.id, -1, False)
 
