@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#############################################################
+#####################################################################
 #
 # TUM Informatics
 # Master Thesis Project: Indexing Methods for Social Search
@@ -7,11 +7,11 @@
 # Author: Oriana Baldizan
 # Date:   October 2015
 #
-# esa.py : defines the ESA Method
+# esa.py : defines the ESA Method and the Vector Model using TF-IDF
 #
 # ESA - Explicit Semantic Analysis
 #
-#############################################################
+#####################################################################
 
 # Python Modules
 from collections import defaultdict
@@ -33,11 +33,6 @@ from wiki_preprocessor import WikiPreprocessor
 from wiki_importer import WikiImporter
 from esa_importer import ESAImporter, EsaIndex
 from experiments import Experiments
-
-#sys.path.append("../LDA-SO-master/")
-#from Importer import Importer
-#from Preprocessor import Preprocessor
-
 
 
 class TfidfModel(object):
@@ -185,25 +180,15 @@ class ESA (object):
 		tfidf_model    = TfidfModel(self.wiki_dictionary, inv_doc_freq)
 		inverted_index = defaultdict(list)
 
-		#i = 0
 		for document in wiki_corpus:
-			#if i == 1210:
-			#	break
-			#i += 1
 			vector = tfidf_model[document]
 			
 			for term_id, value in vector:
-				#if term_id == 33796:
-				#	print "Has beer with " + str(value)
 				inverted_index[term_id].append( (document.document_id, value) )
 
-			print "Added " + str(document.document_id)
+			#print "Added " + str(document.document_id)
 		
 		logging.info("\n\tDone.")
-		#print len(inverted_index) # 13598
-		#print inverted_index
-		#print "Beer has " + str(len(inverted_index[33796]))
-		#print inverted_index.get(33796, -1)
 		self.esa_importer.save_inverted_index(inverted_index)
 
 		self.save_index_to_file(inverted_index)
@@ -230,13 +215,7 @@ class ESA (object):
 
 		logging.info("Determining question vectors ...")
 		questions = StackCorpus(self.stack_importer.connection, "question")
-		#index1 = 0
 		for question in questions:
-
-			#if index1 == 1:
-			#	break
-			#index1 +=1
-
 			question_vector = zeros(dict_size)
 
 			for word in question.body:
@@ -247,7 +226,6 @@ class ESA (object):
 
 			self.question_vectors[question.id] = question_vector
 
-		#print len(self.question_vectors)
 		logging.info("\n\tDone.")
 
 		if only_questions: # Skip the answers
@@ -255,13 +233,8 @@ class ESA (object):
 
 		logging.info("Determining answer vectors ...")
 		answers   = StackCorpus(self.stack_importer.connection, "answer")
-		#index1 = 0
+		
 		for answer in answers:
-
-			#if index1 == 6:
-			#	break
-			#index1 +=1
-
 			answer_vector = zeros(dict_size)
 
 			for word in answer.body:
@@ -272,8 +245,6 @@ class ESA (object):
 					answer_vector[word_id] = tf_idf
 
 			self.answer_vectors[answer.id] = answer_vector
-
-		#print len(self.answer_vectors)
 
 		logging.info("\n\tDone.")
 
@@ -352,28 +323,10 @@ class ESA (object):
 				user_words.append(word)
 
 		self.user_content[user_id] = user_words
-
-		#if self.user_vectors.get(user_id, None) is not None:
-		#	return user_words
-
-		#print "User words "
-		#print user_words
-
-		""" 
-			Use local or global corpus?
-			# Loading question and answer corpus
-		question_corpus = self.stack_importer.get_question_corpus()
-		answer_corpus   = self.stack_importer.get_answer_corpus()
-		#question_corpus = self.stack_importer.get_user_question_corpus(user_id)
-		#answer_corpus   = self.stack_importer.get_user_answer_corpus(user_id)
-
-		corpus     = question_corpus + answer_corpus
-		dictionary = self.stack_importer.get_dictionary_from_corpora([question_corpus, answer_corpus])
-		"""
 		
-		dict_size  = len(stack_dict)
-
+		dict_size   = len(stack_dict)
 		user_vector = zeros(dict_size)
+
 		for word in set(user_words):
 			word_id = stack_dict.get(unicode(word), -1)
 
@@ -382,7 +335,6 @@ class ESA (object):
 				user_vector[word_id] = tf_idf
 
 		self.user_vectors[user_id] = user_vector
-		#print user_vector
 
 		return user_words
 
@@ -393,7 +345,6 @@ class ESA (object):
 		""" Returns the normalized frequency of the word in the given document """
 
 		word_count = document.count(unicode(word))
-
 		return float(word_count) / len(document)
 
 
@@ -454,43 +405,24 @@ class ESA (object):
 		stack_dictionary = self._create_tf_idf_stack_vectors()
 
 		# For each question calculate similarity with each answer
-		question_corpus = StackCorpus(self.stack_importer.connection, "question")
-		#answer_corpus   = StackCorpus(self.stack_importer.connection, "answer")
-
-		#beer_id = stack_dictionary.get(unicode("beer"), -1)
-		#print "Beer in dict " + str(beer_id) #str(unicode("beer") in stack_dictionary)
-		#print beer_id
-
 		logging.info("\nCalculating questions-answers similarities ...")
-		#first_ten = 0
+		question_corpus = StackCorpus(self.stack_importer.connection, "question")
+		
 		for question in question_corpus:
-
-			#if first_ten == 2:
-			#	break
-			#first_ten += 1
-
 			q_vector      = self.get_esa_vector(question.id, question.body, self.question_vectors[question.id], stack_dictionary, 1)
 			q_vector_norm = norm(q_vector)
-			#print q_vector_norm
 			similarities  = []
 
 			answer_corpus = StackCorpus(self.stack_importer.connection, "answer")
 
 			for answer in answer_corpus:
 				a_vector  = self.get_esa_vector(answer.id, answer.body, self.answer_vectors[answer.id], stack_dictionary, 2)
-				#if answer.id in [467,223,637,158,90,92,46,19]:
-				#	print norm(a_vector)
 				sim       = self.similarity(q_vector, q_vector_norm, a_vector)
-				#if answer.id in [467,223,637,158,90,92,46,19]:
-					#print "sim " +  str(sim)
 				similarities.append( (question.id, answer.id, sim) )
 			
-
 			# Save similarities to databse
 			logging.info("\nSaving similarities to database ...")
 			self.esa_importer.save_similarities(similarities)
-			#similarities.clear()
-
 
 		self.esa_importer.close_esa_db()
 		self.stack_importer.close_stack_db()
@@ -527,12 +459,9 @@ class ESA (object):
 				sim       = self.similarity(q_vector, q_vector_norm, a_vector)
 				similarities.append( (question.id, answer.id, sim) )
 			
-
 			# Save similarities to databse
 			logging.info("\nSaving similarities to database ...")
 			self.esa_importer.save_similarities(similarities)
-			#similarities.clear()
-
 
 		self.esa_importer.close_esa_db()
 		self.stack_importer.close_stack_db()
@@ -561,14 +490,9 @@ class ESA (object):
 		logging.info("Calculating questions/answers similarities ...")
 		question_corpus = StackCorpus(self.stack_importer.connection, "question")
 
-		#i = 0
 		for question in question_corpus:
 
-			#if i == 5:
-			#	break
-			#i += 1
 			print "Question " + str(question.id)
-
 			similarities  = []
 
 			# Get the users that gave an answer to the question
@@ -700,42 +624,15 @@ class ESA (object):
 		# Interpretation vector with dimensions = Wikipedia articles
 		interpretation = zeros(2080905)
 
-		"""
-		if type == 1:
-			print "Question " + str(id)
-		elif id in [467,223,637,158,90,92,46,19]:
-			print "Answer " + str(id)
-		"""
-
-		#if type == 1:
-			#print "Doc " + str(id) + " type " + str(type)
-		#print document
-		#related_concepts = []
-		#append           = related_concepts.append
-
 		for token in set(document):
 			documents = self.inverted_index.get(unicode(token), None)
 			word_id   = dictionary.get(unicode(token), -1)
 
-			"""
-			if type == 1 or id in [467,223,637,158,90,92,46,19]:
-				print "Related concepts with word " + token + ": " + str(tfidf_vector[word_id]) #+ " " + str(word_id) + " : " + str(len(documents))
-			"""
 			if documents is not None and word_id != -1:
 				#print str(len(documents))
 				for document_id, value in documents:
 					interpretation[document_id] += (value * tfidf_vector[word_id])
-					#append(document_id)
-					#if value > 0 and id in [467,223,637,158,90,92,46,19]:
-					#	print "doc " +  str(document_id) + " " + str(value)
-					#print "Interpretation " + str(interpretation[document_id])
-				
-				#print "term " + token + " value " + str(tfidf_vector[word_id])
 
-		# Save related concepts []
-		#print "Related concepts " + str(len(related_concepts))
-		#self.esa_importer.save_concept_doc_relation(id, interpretation, set(related_concepts), type)
-		#print interpretation
 		return interpretation
 
 
@@ -744,8 +641,6 @@ class ESA (object):
 
 		# Cosine similartity
 		sim = float(dot(vector1, vector2) / (norm_vector1 * norm(vector2)))
-		#print sim
-
 		return sim
 
 
@@ -773,7 +668,6 @@ class ESA (object):
 			for word, doc_list in index.iteritems():
 				#print word
 				f.write(word + '\n')
-				#f.write(str(word_id) + ": " + str(len(index[word_id])) + '\n')
 				f.write(' '.join([str(x) for x in doc_list]))
 				f.write('\n')
 
@@ -867,7 +761,6 @@ class ESA (object):
 
 		# Clean tables
 		logging.info("Cleaning similarity tables ...")
-		#self.esa_importer.create_clean_concept_doc_relation()
 		self.esa_importer.create_clean_similarities_table()
 
 		logging.info("Loading the inverted index ...")
@@ -889,7 +782,6 @@ class ESA (object):
 			similarities  = []
 
 			for user_id in users:
-				#print "User " + str(user_id)
 				user_body = self._create_user_tf_idf_stack_vector(user_id, stack_dictionary)
 				u_vector  = self.get_esa_vector(user_id, user_body, self.user_vectors[user_id], stack_dictionary, 2)
 				sim       = self.similarity(q_vector, q_vector_norm, u_vector)
@@ -924,8 +816,7 @@ class ESA (object):
 		question_corpus = StackCorpus(self.stack_importer.connection, "question")
 
 		users = self.stack_importer.get_active_users()
-		#print users
-
+	
 		for question in question_corpus:
 			print "Question " + str(question.id)
 			q_vector      = self.question_vectors[question.id]
@@ -933,7 +824,6 @@ class ESA (object):
 			similarities  = []
 
 			for user_id in users:
-				#print "User " + str(user_id)
 				user_body = self._create_user_tf_idf_stack_vector(user_id, stack_dictionary)
 				u_vector  = self.user_vectors[user_id]
 				sim       = self.similarity(q_vector, q_vector_norm, u_vector)
@@ -983,12 +873,8 @@ class ESA (object):
 		question_corpus  = StackCorpus(self.stack_importer.connection, "question")
 		similar_answers  = {}
 		original_answers = {}
-		#i = 0
+		
 		for question in question_corpus:
-
-			#if i == 5:
-			#	break
-			#i += 1
 			original_answers[question.id] = self.stack_importer.get_question_original_answers(question.id)
 			similar_answers[question.id]  = self.esa_importer.load_similarities_for_question(question.id, -1, False)
 
@@ -999,9 +885,7 @@ class ESA (object):
 		# Calculate avg precision and recall for each case
 		precision = {}
 		recall    = {}
-		#total_answers = 20
 		for limit in xrange(1,total_answers+1):
-			#print "Calculating with limit " + str(limit)
 			logging.info("Calculating with limit %s", str(limit))
 
 			avg_precision, avg_recall = self.experiments.run_experiment_1_avg(number_of_answers,
